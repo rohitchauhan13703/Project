@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chauhan- Indian E-Commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        .price::before {
+            content: "₹";
+            margin-right: 2px;
+        }
+        .discount-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .product-image {
+            transition: all 0.3s ease;
+        }
+        .product-image:hover {
+            transform: scale(1.02);
+        }
+        .cart-item-animate {
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .mobile-menu {
+            max-width: 0;
+            overflow: hidden;
+            transition: max-width 0.5s ease;
+        }
+        .mobile-menu.open {
+            max-width: 300px;
+        }
+        .selected-size {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .selected-color {
+            border: 2px solid #4f46e5 !important;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+        }
+        #cart-sidebar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        #cart-sidebar.open {
+            transform: translateX(0);
+        }
+        .thumbnail-active {
+            border: 2px solid #4f46e5;
+        }
+        .nav-link {
+            transition: color 0.2s ease;
+        }
+        .nav-link:hover {
+            color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button id="menu-toggle" class="lg:hidden text-gray-700">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+                <a href="#home" class="text-2xl font-bold text-indigo-600 flex items-center">
+                    <i class="fas fa-shopping-bag mr-2"></i>
+                    Chauhan Trends
+                </a>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#home" class="nav-link text-gray-700">Home</a>
+                <a href="#products" class="nav-link text-gray-700">Products</a>
+                <a href="#deals" class="nav-link text-gray-700">Deals</a>
+                <a href="#about" class="nav-link text-gray-700">About</a>
+                <a href="#contact" class="nav-link text-gray-700">Contact</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button class="relative text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-search text-xl"></i>
+                </button>
+                <button id="cart-btn" class="relative text-gray-700 hover:text-indigo-600">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+                <a href="#" class="hidden md:inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition">Login</a>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="mobile-menu lg:hidden bg-white shadow-lg absolute left-0 top-full w-full">
+            <div class="px-4 py-2 space-y-2">
+                <a href="#home" class="block py-2 nav-link text-gray-700 border-b border-gray-100">Home</a>
+                <a href="#products" class="block py-2 nav-link text-gray-700 border-b border-gray-100">Products</a>
+                <a href="#deals" class="block py-2 nav-link text-gray-700 border-b border-gray-100">Deals</a>
+                <a href="#about" class="block py-2 nav-link text-gray-700 border-b border-gray-100">About</a>
+                <a href="#contact" class="block py-2 nav-link text-gray-700 border-b border-gray-100">Contact</a>
+                <a href="#" class="block py-2 text-indigo-600 font-semibold">Login</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cart Sidebar -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-lg z-50 overflow-y-auto">
+        <div class="p-4">
+            <div class="flex justify-between items-center mb-4 border-b pb-4">
+                <h2 class="text-xl font-bold">Your Cart</h2>
+                <button id="close-cart" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="cart-items" class="divide-y">
+                <!-- Cart items will be added here dynamically -->
+                <div class="py-4 text-center text-gray-500" id="empty-cart-message">
+                    Your cart is empty
+                </div>
+            </div>
+            <div id="cart-summary" class="border-t pt-4 mt-4 hidden">
+                <div class="flex justify-between mb-2">
+                    <span class="font-semibold">Subtotal:</span>
+                    <span id="cart-subtotal" class="price">0</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="font-semibold">Delivery:</span>
+                    <span class="price">0</span>
+                </div>
+                <div class="flex justify-between mb-4">
+                    <span class="font-semibold">Discount:</span>
+                    <span class="text-green-600 price">0</span>
+                </div>
+                <div class="flex justify-between text-xl font-bold border-t pt-2">
+                    <span>Total:</span>
+                    <span id="cart-total" class="price">0</span>
+                </div>
+                <button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold mt-4 hover:bg-green-700">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Home Section -->
+        <section id="home" class="mb-16">
+            <div class="bg-indigo-50 rounded-xl p-8 text-center">
+                <h1 class="text-3xl md:text-4xl font-bold text-indigo-800 mb-4">Welcome to chauhan trends</h1>
+                <p class="text-lg text-gray-700 mb-6">India's premier destination for authentic Clothes</p>
+                <a href="#products" class="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition">
+                    Shop Now
+                </a>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section id="products" class="mb-16">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Product Images -->
+                <div class="lg:w-1/2">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-4">
+                        <img id="main-product-image" src="1 (2).png" 
+                             alt="Brown oversized t-shirt" 
+                             class="w-full h-64 md:h-96 object-contain product-image">
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="bg-white rounded-md shadow-sm p-2 cursor-pointer hover:shadow-md thumbnail-item" data-image="1 (2).png">
+                            <img src="1 (2).png" 
+                                 alt="Brown oversized t-shirt 1" 
+                                 class="w-full h-20 object-contain">
+                        </div>
+                        <div class="bg-white rounded-md shadow-sm p-2 cursor-pointer hover:shadow-md thumbnail-item" data-image="1 (1).png">
+                            <img src="1 (1).png" 
+                                 alt="Black Oversized t-shirt 2" 
+                                 class="w-full h-20 object-contain">
+                        </div>
+                        <div class="bg-white rounded-md shadow-sm p-2 cursor-pointer hover:shadow-md thumbnail-item" data-image="1 (3).png">
+                            <img src="1 (3).png" 
+                                 alt="beige Oversized t-shirt" 
+                                 class="w-full h-20 object-contain">
+                        </div>
+                        <div class="bg-white rounded-md shadow-sm p-2 cursor-pointer hover:shadow-md thumbnail-item" data-image="11.png">
+                            <img src="11.png" 
+                                 alt="Black Muscle fit t-shirt" 
+                                 class="w-full h-20 object-contain">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Details -->
+                <div class="lg:w-1/2">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Plain Black oversized t shirt</h1>
+                                <p class="text-gray-500 text-sm mb-4">Unisex</p>
+                            </div>
+                            <button id="wishlist-btn" class="text-red-400 hover:text-red-600">
+                                <i class="far fa-heart text-2xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex items-center mb-4">
+                            <div class="flex text-yellow-400 mr-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <span class="text-gray-600">4.5 (1,234 reviews)</span>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <span class="text-3xl font-bold price">899</span>
+                            <span class="text-lg text-gray-500 line-through ml-2 price">2,499</span>
+                            <span class="ml-3 bg-green-100 text-green-800 text-sm font-semibold px-2.5 py-0.5 rounded discount-badge">15% OFF</span>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Product Details</h3>
+                            <p class="text-gray-600">
+                    
+                            </p>
+                            <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                                <li>Round Neck</li>
+                                <li>Half Sleeve</li>
+                                <li>Oversized</li>
+                                <li>Wash in normal water</li>
+                                <li>Cotton </li>
+                            </ul>
+                            <p class="text-gray-600 mt-2">
+                                Available in multiple color options (Brown, Black, Tan). Free shipping on all orders above ₹999.
+                            </p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Size</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="size-btn px-4 py-2 border rounded-md hover:bg-indigo-50 hover:border-indigo-300" data-size="S">S</button>
+                                <button class="size-btn px-4 py-2 border rounded-md hover:bg-indigo-50 hover:border-indigo-300" data-size="M">M</button>
+                                <button class="size-btn px-4 py-2 border rounded-md hover:bg-indigo-50 hover:border-indigo-300" data-size="L">L</button>
+                                <button class="size-btn px-4 py-2 border rounded-md hover:bg-indigo-50 hover:border-indigo-300" data-size="XL">XL</button>
+                                <button class="size-btn px-4 py-2 border rounded-md hover:bg-indigo-50 hover:border-indigo-300" data-size="XXL">XXL</button>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-2">
+                                <i class="fas fa-info-circle mr-1"></i> Not sure about your size? 
+                                <a href="#" class="text-indigo-600 hover:underline">Check our size guide</a>
+                            </p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Color</h3>
+                            <div class="flex gap-3">
+                                <button class="color-btn w-10 h-10 rounded-full border-2 border-gray-200 focus:border-indigo-500" style="background-color: #8B4513;" data-color="Brown"></button>
+                                <button class="color-btn w-10 h-10 rounded-full border-2 border-gray-200 focus:border-indigo-500" style="background-color: #000000;" data-color="Black"></button>
+                                <button class="color-btn w-10 h-10 rounded-full border-2 border-gray-200 focus:border-indigo-500" style="background-color: #D2B48C;" data-color="Tan"></button>
+                                <button class="color-btn w-10 h-10 rounded-full border-2 border-gray-200 focus:border-indigo-500" style="background-color: #000000;" data-color="Black"></button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex items-center border rounded-lg overflow-hidden">
+                                <button class="quantity-btn px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700" id="decrement">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="px-4 py-2 text-center w-12" id="quantity">1</span>
+                                <button class="quantity-btn px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700" id="increment">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <button id="add-to-cart" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg font-medium flex items-center justify-center transition">
+                                <i class="fas fa-shopping-cart mr-2"></i> Add to Cart
+                            </button>
+                            <button id="buy-now" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-6 rounded-lg font-medium flex items-center justify-center transition">
+                                <i class="fas fa-bolt mr-2"></i> Buy Now
+                            </button>
+                        </div>
+                        
+                        <div class="mt-6 pt-6 border-t">
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-truck mr-2"></i>
+                                <span>Delivered in 3-5 days</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600 mb-1">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                <span>30 days colour warranty</span>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-undo mr-2"></i>
+                                <span>Easy 14 days return & exchange</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Deals Section -->
+        <section id="deals" class="mb-16">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Special Deals</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                        <div class="flex items-center mb-3">
+                            <div class="bg-indigo-600 text-white p-2 rounded-full mr-3">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold">Clearance Sale</h3>
+                        </div>
+                        <p class="text-gray-600 mb-3">Up to 60% off on last season's collection</p>
+                        <a href="#" class="text-indigo-600 font-medium inline-flex items-center">
+                            Shop Now <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4 border border-green-100">
+                        <div class="flex items-center mb-3">
+                            <div class="bg-green-600 text-white p-2 rounded-full mr-3">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold">Combo Offers</h3>
+                        </div>
+                        <p class="text-gray-600 mb-3">Buy 2 get 1 free on selected items</p>
+                        <a href="#" class="text-green-600 font-medium inline-flex items-center">
+                            View Offers <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-100">
+                        <div class="flex items-center mb-3">
+                            <div class="bg-yellow-600 text-white p-2 rounded-full mr-3">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold">Flash Sale</h3>
+                        </div>
+                        <p class="text-gray-600 mb-3">Limited time offers - ends in 12 hours</p>
+                        <a href="#" class="text-yellow-600 font-medium inline-flex items-center">
+                            Hurry Up! <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="mb-16">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">About Chauhan trends</h2>
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Our Story</h3>
+                        <p class="text-gray-600 mb-4">
+                            Founded in 2025,Chauhan Trends is India's fastest growing e-commerce platform for authentic Clothes. We're committed to bringing you the best quality products at affordable prices.
+                        </p>
+                        <p class="text-gray-600 mb-4">
+                            Our mission is to make premium Clothes accessible to everyone while supporting Indian manufacturers and artisans.
+                        </p>
+                        <div class="bg-indigo-50 p-4 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="text-indigo-600 mr-3 mt-1">
+                                    <i class="fas fa-bullseye text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Our Vision</h4>
+                                    <p class="text-gray-600">
+                                        To become India's most trusted Clothes brand, known for quality, comfort, and style.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-100 rounded-lg p-4">
+                        <img src="111.jpg" 
+                             alt="DesiKart Store" 
+                             class="w-full rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="mb-16">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Contact Us</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Get in Touch</h3>
+                        <form>
+                            <div class="mb-4">
+                                <label for="name" class="block text-gray-700 mb-2">Name</label>
+                                <input type="text" id="name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="mb-4">
+                                <label for="email" class="block text-gray-700 mb-2">Email</label>
+                                <input type="email" id="email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div class="mb-4">
+                                <label for="message" class="block text-gray-700 mb-2">Message</label>
+                                <textarea id="message" rows="4" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                Send Message
+                            </button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Our Details</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="text-indigo-600 mr-3 mt-1">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Address</h4>
+                                    <p class="text-gray-600">
+                                        Primary Health Center Mahakal Distic Kngra<br>
+                                        Baijnath,176125 <br>
+                                        India
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="text-indigo-600 mr-3 mt-1">
+                                    <i class="fas fa-phone-alt"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Phone</h4>
+                                    <p class="text-gray-600">
+                                        +91 9876543210<br>
+                                        (9:00 AM - 6:00 PM, Mon-Sat)
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="text-indigo-600 mr-3 mt-1">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 mb-1">Email</h4>
+                                    <p class="text-gray-600">
+                                        rohitchuhan1800@gmail.com<br>
+                                        
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Shop</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">Oversized t-shirt </a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Mussle fit </a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Casual </a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">polo t-shirt</a></li>
+                
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Help</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">Customer Service</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Track Order</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Returns & Refunds</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Size Guide</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">FAQs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Company</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">About Us</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Careers</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Terms & Conditions</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Privacy Policy</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Connect With Us</h3>
+                    <div class="flex space-x-4 mb-4">
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-300 hover:text-white text-xl"><i class="fab fa-youtube"></i></a>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Download App</h3>
+                    <div class="flex space-x-2">
+                        <a href="#" class="bg-black text-white px-3 py-1 rounded flex items-center">
+                            <i class="fab fa-google-play mr-1"></i> Play Store
+                        </a>
+                        <a href="#" class="bg-black text-white px-3 py-1 rounded flex items-center">
+                            <i class="fab fa-apple mr-1"></i> App Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© copyright by Chauhan Trends 2025 </p>
+                <p class="text-xs mt-2">Make in India ❤️</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript for all interactive elements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Menu Toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            menuToggle.addEventListener('click', function() {
+                mobileMenu.classList.toggle('open');
+            });
+
+            // Navigation - smooth scrolling to sections
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Close mobile menu if open
+                    mobileMenu.classList.remove('open');
+                    
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+                    
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        // Update URL without page reload
+                        history.pushState(null, null, targetId);
+                        
+                        // Scroll to target
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+
+            // Highlight active nav link based on scroll position
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            window.addEventListener('scroll', function() {
+                let current = '';
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    
+                    if (pageYOffset >= (sectionTop - 100)) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('text-indigo-600');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('text-indigo-600');
+                    }
+                });
+            });
+
+            // Set initial active link based on URL
+            if (window.location.hash) {
+                const initialActiveLink = document.querySelector(`.nav-link[href="${window.location.hash}"]`);
+                if (initialActiveLink) {
+                    initialActiveLink.classList.add('text-indigo-600');
+                }
+            }
+
+            // Cart Functionality
+            const cartBtn = document.getElementById('cart-btn');
+            const closeCart = document.getElementById('close-cart');
+            const cartSidebar = document.getElementById('cart-sidebar');
+            
+            cartBtn.addEventListener('click', function() {
+                cartSidebar.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            closeCart.addEventListener('click', function() {
+                cartSidebar.classList.remove('open');
+                document.body.style.overflow = '';
+            });
+
+            // Close cart when clicking outside
+            cartSidebar.addEventListener('click', function(e) {
+                if (e.target === cartSidebar) {
+                    cartSidebar.classList.remove('open');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Wishlist Button
+            const wishlistBtn = document.getElementById('wishlist-btn');
+            let isWishlisted = false;
+            
+            wishlistBtn.addEventListener('click', function() {
+                isWishlisted = !isWishlisted;
+                const icon = wishlistBtn.querySelector('i');
+                if (isWishlisted) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    wishlistBtn.classList.remove('text-red-400');
+                    wishlistBtn.classList.add('text-red-600');
+                    // Show some notification
+                    alert('Added to wishlist!');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    wishlistBtn.classList.remove('text-red-600');
+                    wishlistBtn.classList.add('text-red-400');
+                }
+            });
+
+            // Quantity Selector
+            const decrementBtn = document.getElementById('decrement');
+            const incrementBtn = document.getElementById('increment');
+            const quantityDisplay = document.getElementById('quantity');
+            let quantity = 1;
+            
+            function updateQuantity() {
+                quantityDisplay.textContent = quantity;
+            }
+            
+            decrementBtn.addEventListener('click', function() {
+                if (quantity > 1) {
+                    quantity--;
+                    updateQuantity();
+                }
+            });
+            
+            incrementBtn.addEventListener('click', function() {
+                quantity++;
+                updateQuantity();
+            });
+
+            // Size Selector
+            const sizeButtons = document.querySelectorAll('.size-btn');
+            let selectedSize = null;
+            
+            sizeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove selected class from all buttons
+                    sizeButtons.forEach(btn => {
+                        btn.classList.remove('selected-size', 'bg-indigo-600', 'text-white');
+                    });
+                    
+                    // Add selected class to clicked button
+                    button.classList.add('selected-size', 'bg-indigo-600', 'text-white');
+                    selectedSize = button.dataset.size;
+                });
+            });
+
+            // Color Selector
+            const colorButtons = document.querySelectorAll('.color-btn');
+            let selectedColor = null;
+            
+            colorButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove selected class from all buttons
+                    colorButtons.forEach(btn => {
+                        btn.classList.remove('selected-color');
+                    });
+                    
+                    // Add selected class to clicked button
+                    button.classList.add('selected-color');
+                    selectedColor = button.dataset.color;
+                });
+            });
+
+            // Image Thumbnail Gallery
+            const mainProductImage = document.getElementById('main-product-image');
+            const thumbnailItems = document.querySelectorAll('.thumbnail-item');
+            
+            thumbnailItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all thumbnails
+                    thumbnailItems.forEach(thumb => {
+                        thumb.classList.remove('thumbnail-active');
+                    });
+                    
+                    // Add active class to clicked thumbnail
+                    this.classList.add('thumbnail-active');
+                    
+                    // Update main image
+                    const newImageSrc = this.dataset.image;
+                    mainProductImage.src = newImageSrc;
+                    mainProductImage.alt = this.querySelector('img').alt;
+                });
+            });
+
+            // Initialize first thumbnail as active
+            if (thumbnailItems.length > 0) {
+                thumbnailItems[0].classList.add('thumbnail-active');
+            }
+
+            // Cart Logic
+            const cartCount = document.getElementById('cart-count');
+            const cartItems = document.getElementById('cart-items');
+            const emptyCartMessage = document.getElementById('empty-cart-message');
+            const cartSummary = document.getElementById('cart-summary');
+            const cartSubtotal = document.getElementById('cart-subtotal');
+            const cartTotal = document.getElementById('cart-total');
+            const addToCartBtn = document.getElementById('add-to-cart');
+            const buyNowBtn = document.getElementById('buy-now');
+            
+            let cart = [];
+            
+            function updateCartUI() {
+                const count = cart.reduce((total, item) => total + item.quantity, 0);
+                cartCount.textContent = count;
+                
+                // If cart is empty
+                if (cart.length === 0) {
+                    emptyCartMessage.classList.remove('hidden');
+                    cartSummary.classList.add('hidden');
+                    cartItems.innerHTML = '<div id="empty-cart-message" class="py-4 text-center text-gray-500">Your cart is empty</div>';
+                    return;
+                }
+                
+                // If cart has items
+                emptyCartMessage.classList.add('hidden');
+                cartSummary.classList.remove('hidden');
+                
+                // Calculate totals
+                const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+                const discount = Math.round(subtotal * 0.05); // 5% discount for demo
+                const total = subtotal - discount;
+                
+                // Update totals display
+                cartSubtotal.textContent = formatPrice(subtotal);
+                cartTotal.textContent = formatPrice(total);
+                
+                // Clear and rebuild cart items
+                cartItems.innerHTML = '';
+                cart.forEach((item, index) => {
+                    const cartItem = document.createElement('div');
+                    cartItem.className = 'py-4 flex cart-item-animate';
+                    cartItem.innerHTML = `
+                        <div class="w-20 h-20 bg-white rounded-md overflow-hidden mr-4">
+                            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-contain">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium">${item.name}</h3>
+                            <p class="text-sm text-gray-500">Size: ${item.size}</p>
+                            <p class="text-sm text-gray-500">Color: ${item.color}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-medium price">${formatPrice(item.price)}</p>
+                            <div class="flex items-center justify-end mt-2">
+                                <button class="quantity-btn px-2 py-1 bg-gray-100 text-sm" onclick="updateCartQuantity(${index}, -1)">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="px-2">${item.quantity}</span>
+                                <button class="quantity-btn px-2 py-1 bg-gray-100 text-sm" onclick="updateCartQuantity(${index}, 1)">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    cartItems.appendChild(cartItem);
+                });
+            }
+            
+            // Helper function to format price with ₹ symbol
+            function formatPrice(price) {
+                return price.toLocaleString('en-IN');
+            }
+            
+            // Add to cart button click
+            addToCartBtn.addEventListener('click', function() {
+                if (!selectedSize) {
+                    alert('Please select a size');
+                    return;
+                }
+                
+                if (!selectedColor) {
+                    alert('Please select a color');
+                    return;
+                }
+                
+                const productName = document.querySelector('h1').textContent;
+                const productPrice = 899; // Hardcoded for demo
+
+
+
+
+                
+                const productImage = '';
+                
+
+
+ 
+
+
+
+
+                // Check if item already exists in cart with same size and color
+                const existingItemIndex = cart.findIndex(item => 
+                    item.size === selectedSize && item.color === selectedColor
+                );
+                
+                if (existingItemIndex >= 0) {
+                    // Update quantity if item exists
+                    cart[existingItemIndex].quantity += quantity;
+                } else {
+                    // Add new item to cart
+                    cart.push({
+                        name: productName,
+                        price: productPrice,
+                        image: productImage,
+                        size: selectedSize,
+                        color: selectedColor,
+                        quantity: quantity
+                    });
+                }
+                
+                updateCartUI();
+                // Show success message
+                alert('Item added to cart!');
+                
+                // Reset quantity for next addition
+                quantity = 1;
+                updateQuantity();
+            });
+            
+            // Buy now button click (same as add to cart + open cart)
+            buyNowBtn.addEventListener('click', function() {
+                if (!selectedSize) {
+                    alert('Please select a size');
+                    return;
+                }
+                
+                if (!selectedColor) {
+                    alert('Please select a color');
+                    return;
+                }
+                
+                // First add to cart
+                addToCartBtn.click();
+                
+                // Then open cart
+                cartSidebar.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            });
+            
+            // Make updateCartQuantity available globally for inline onclick handlers
+            window.updateCartQuantity = function(index, change) {
+                const newQuantity = cart[index].quantity + change;
+                
+                if (newQuantity <= 0) {
+                    // Remove item if quantity reaches 0
+                    cart.splice(index, 1);
+                } else {
+                    // Update quantity
+                    cart[index].quantity = newQuantity;
+                }
+                
+                updateCartUI();
+            };
+        });
+    </script>
+</body>
+</html>
